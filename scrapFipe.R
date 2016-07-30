@@ -72,29 +72,31 @@ modelos.honda <- modelos %>% filter(marca.name == "HONDA"
                               & str_detect(pattern = "Fit", modelo.name) 
                               & str_detect(pattern = "Aut.", modelo.name))
 
-# debug
-modelos.honda
 
 modelos.anos.honda <- loadModelosAnos(modelos.honda)
 
-modelos.anos.honda <- mapply(get_modelo_anos, modelos.honda[2,]$marca.id, modelos.honda[2,]$modelo.id)
-#modelos.anos.honda <- get_modelo_anos(modelos.honda[1,]$marca.id, modelos.honda[1,]$modelo.id)
-modelos.anos.honda[2]
-
-
-
-
-str(honda.fit.anos)
-
-get_preco_veiculo <- function(api_veiculo, marca.id, modelo.id, ano.id){
+get_preco_veiculo <- function(marca.id, modelo.id, ano.id){
         get_uri <- paste(api_veiculo, marca.id, "/", modelo.id , "/", ano.id ,".json", sep = "")
         preco <- GET(get_uri)
         preco <- fromJSON(content(preco, "text"))
         return(preco)
 }
 
-preco <- with(honda.fit.anos[1, ], get_preco_veiculo(api_veiculo, marca.id, modelo.id, ano.id))
-preco <- as.data.frame(preco)
-names(preco) <- c("database", "")
+loadModelosPrecos <- function(modelos.anos){
+        preco.df <- NULL
+        for( i in 1:nrow(modelos.anos)){
+                marca.id <- modelos.anos[i, ]$marca.id
+                modelo.id <- modelos.anos[i, ]$modelo.id
+                ano.id <- modelos.anos[i, ]$ano.id
+                p <- get_preco_veiculo(marca.id, modelo.id, ano.id)
+                preco <- data.frame(p$referencia, p$fipe_codigo, p$name, p$combustivel,
+                                p$marca, p$ano_modelo, p$preco, p$key, p$time,
+                                p$veiculo, p$id)
+                names(precos) <- names(p)
+                preco.df <- rbind(preco.df, preco)
+        }
+        return(preco.df)
+}
 
-
+precos <- loadModelosPrecos(modelos.anos.honda)
+precos
