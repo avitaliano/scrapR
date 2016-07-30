@@ -1,12 +1,8 @@
 # script para baixar tabela fipe de veiculos
 
-library(rvest)
-library(XML)
 library(stringr)
 library(dplyr)
 library(jsonlite)
-library(httr)
-
 
 api_base <- "http://fipeapi.appspot.com/api/1/carros/"
 api_veiculos <- paste(api_base, "veiculos/", sep = "")
