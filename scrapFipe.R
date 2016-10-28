@@ -6,7 +6,7 @@ library(XML)
 library(jsonlite)
 
 api_baseurl <- 'http://veiculos.fipe.org.br/api/veiculos'
-tabRef_api <- paste0(api_baseurl, "/ConsultarTabelaDeReferencia")        
+api_tabelaReferencia <- paste0(api_baseurl, "/ConsultarTabelaDeReferencia")        
 
 # Crédito destes header options 
 # Rafael Piza
@@ -23,5 +23,6 @@ HEADER_OPTS <-  c('Accept' = 'application/json, text/javascript, */*; q=0.01',
         'User-Agent' = 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36',
         'X-Requested-With' = 'XMLHttpRequest')
 
-tabRef <- content(POST(url = tabRef_api, config = add_headers(.headers = HEADER_OPTS), body = ""))
-unlist(tabRef)
+tabRef_result <- content(POST(url = api_tabelaReferencia, config = add_headers(.headers = HEADER_OPTS), body = ""))
+tabRef <- data.frame(matrix(unlist(tabRef_result), ncol = 2, byrow = TRUE))
+names(tabRef) <- c("codigo", "mes")
