@@ -44,30 +44,74 @@ api_fipe <- function(url, data, verbose = FALSE, encode = "form"){
 }
 
 # Chama API para buscar meses de referência.
-tabRef_result <- api_fipe(api_tabelaReferencia, data = "")
-tabRef <- data.frame(matrix(unlist(tabRef_result), ncol = 2, byrow = TRUE),
-                     stringsAsFactors = FALSE)
-names(tabRef) <- c("mes.id", "mes.nome")
-tabRef
+busca_mesReferencia <- function(){
+        tabRef_result <- api_fipe(api_tabelaReferencia, data = "")
+        tabRef <- data.frame(matrix(unlist(tabRef_result), ncol = 2, byrow = TRUE),
+                             stringsAsFactors = FALSE)
+        names(tabRef) <- c("mes.id", "mes.nome")
+        return(tabRef)
+}
+
+# Busca as marcas
+busca_marcas <- function(tipo, mes.id, somente_principais = FALSE){
+        # parametros para chamar api
+        marcas_data <- list(codigoTabelaReferencia = mes.id, 
+                            codigoTipoVeiculo = tipo)
+        # retorno
+        marcas_return <- api_fipe(url = api_Marcas, marcas_data)
+        # jogando retorno em um data.frame
+        marcas <- data.frame(matrix(unlist(marcas_return), ncol = 2, byrow = TRUE), 
+                             stringsAsFactors = FALSE)
+        names(marcas) <- c("marca.nome", "marca.id")
+        
+        if(somente_principais){
+                # seleciona somente as principais marcas no Brasil
+                marcas_principais <- c("Fiat", "Ford", "GM - Chevrolet",
+                                       "Honda", "Hyundai", "JAC",
+                                       "Jeep", "Mitsubishi", "Nissan",
+                                       "Peugeot", "Renault", "Suzuki",
+                                       "Toyota", "VW - VolksWagen")
+                marcas <- marcas %>% filter(marca.nome %in% marcas_principais)        
+        }
+        
+        return(marcas)
+}
+
+busca_modelos <- function(tipo, mes.id, marca.id){
+        
+        modelos_data <- list( codigoTipoVeiculo = tipo,
+                              codigoTabelaReferencia = mes.id,
+                              codigoMarca = marca.id)
+        # codigoModelo = '',
+        # ano = '',
+        # codigoTipoCombustivel = '',
+        # anoModelo = '',
+        # modeloCodigoExterno = '')
+        modelos_return <- api_fipe(url = api_Modelos, data = modelos_data)
+        modelos <- modelos_return[['Modelos']]
+        modelos <- data.frame(matrix(unlist(modelos), ncol = 2, byrow = TRUE), 
+                              stringsAsFactors = FALSE)
+        
+        names(modelos) <- c("modelo.name", "modelo.id")
+        return(modelos)
+}
+
+# INIT
+
+# seleciona meses disponíveis
+tabRef <- busca_mesReferencia()
 
 # Seleciona o mes atual, como o primeiro elemento da lista.
 mes_atual <- tabRef[1,]
 mes_atual
 
-# Busca as marcas
-marcas_data <- list(codigoTabelaReferencia = mes_atual$mes.id, 
-                    codigoTipoVeiculo = tipo['carro'])
-marcas_data
-marcas_return <- api_fipe(url = api_Marcas, marcas_data)
-marcas <- data.frame(matrix(unlist(marcas_return), ncol = 2, byrow = TRUE), 
-                     stringsAsFactors = FALSE)
-names(marcas) <- c("marca.nome", "marca.id")
-
-# seleciona somente as principais marcas no Brasil
-marcas_principais <- c("Fiat", "Ford", "GM - Chevrolet",
-                    "Honda", "Hyundai", "JAC",
-                    "Jeep", "Mitsubishi", "Nissan",
-                    "Peugeot", "Renault", "Suzuki",
-                    "Toyota", "VW - VolksWagen")
-marcas <- marcas %>% filter(marca.nome %in% marcas_principais)
+# seleciona marcas
+marcas <- busca_marcas(tipo = tipo['carro'], mes.id = mes_atual$mes.id, somente_principais = TRUE)
 marcas
+
+# seleciona modelos de uma marca
+tipo <- tipo['carro']
+mes.id <- mes_atual$mes.id
+marca.id <- marcas[3, ]$marca.id
+modelos <- busca_modelos(tipo = tipo, mes.id = mes.id, marca.id = marca.id)
+View(modelos)
