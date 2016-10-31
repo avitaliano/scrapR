@@ -197,7 +197,7 @@ download_fipe <- function(reset = FALSE, download_dir = "."){
                                         marca_valores <- rbind(marca_valores, valor)
                                 }
                         }
-                        marca_arquivo <- paste0(download_dir, "/", marca$marca.nome,".csv")
+                        marca_arquivo <- paste0(download_dir, "/fipe-", marca$marca.nome,".csv")
                         write.csv(marca_valores, file = marca_arquivo)
                         
                         # atualiza o arquivo de controle
