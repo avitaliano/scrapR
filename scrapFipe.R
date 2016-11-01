@@ -209,5 +209,8 @@ download_fipe <- function(reset = FALSE, download_dir = "."){
         print("Download FIPE finalizado.")
 }
 
-download_fipe(download_dir = "data", reset = TRUE)
+load_fipe_DF <- function(download_dir){
+        
+}
 
+download_fipe(download_dir = "data", reset = TRUE)
