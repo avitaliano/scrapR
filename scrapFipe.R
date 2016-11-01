@@ -153,6 +153,11 @@ busca_valor <- function(tipo, ano){
 
 download_fipe <- function(mesRef, reset = FALSE, download_dir = "fipe_data"){
 
+        # cria diretorio se ele nao existe
+        if(!file.exists(download_dir)){
+                dir.create(download_dir)
+        }
+        
         # se nao informar a mes de referencia, buscar database mais recente
         if(missing(mesRef)){
                 # seleciona meses disponíveis
@@ -202,12 +207,12 @@ download_fipe <- function(mesRef, reset = FALSE, download_dir = "fipe_data"){
                         modelos <- busca_modelos(tipo = tipo['carro'], marca = marca )
                         for(j in 1:nrow(modelos)){
                                 modelo <- modelos[j, ]
-                                print(paste("   Modelo",modelo$modelo.nome))
+                                #print(paste("   Modelo",modelo$modelo.nome))
                                 
                                 anos <- busca_anos(tipo = tipo['carro'], modelo = modelo)
                                 for(k in 1:nrow(anos)){
                                         ano <- anos[k,]
-                                        print (paste("      Ano", ano$ano.nome))
+                                        #print (paste("      Ano", ano$ano.nome))
                                         
                                         valor <- busca_valor(tipo = tipo['carro'], ano = ano)
                                         marca_valores <- rbind(marca_valores, valor)
@@ -250,5 +255,12 @@ download_fipe_PorAno <- function(ano, ...){
         apply(mesesAno, 1, download_fipe, ...)
 }
 
-download_fipe_PorAno(ano = 2016)
-
+download_fipe_VariosAnos <- function(ano_inicial, ano_final, ...){
+        
+        # verifica os parametros
+        if(is.numeric(ano_inicial) && is.numeric(ano_final) && ano_inicial <= ano_final){
+                sapply(ano_final:ano_inicial, download_fipe_PorAno, ...)
+        }else{
+                stop("parametros invalidos")
+        }
+}
