@@ -1,10 +1,8 @@
 # scrap direto na pagina da fipe
 
 library(httr)
-library(rvest)
-library(XML)
-library(jsonlite)
 library(dplyr)
+library(lubridate)
 
 # APIs
 api_baseurl             <- 'http://veiculos.fipe.org.br/api/veiculos'
@@ -48,7 +46,10 @@ busca_mesReferencia <- function(){
         tabRef_result <- api_fipe(api_tabelaReferencia, data = "")
         tabRef <- data.frame(matrix(unlist(tabRef_result), ncol = 2, byrow = TRUE),
                              stringsAsFactors = FALSE)
+
         names(tabRef) <- c("mes.id", "mes.nome")
+        databases <- paste0("01/",tabRef$mes.nome)
+        tabRef$database <- as.Date(databases, "%d/%B/%Y")
         return(tabRef)
 }
 
@@ -68,6 +69,7 @@ busca_marcas <- function(tipo, mesRef, somente_principais = FALSE){
         # concatena dados do mes de referencia
         marcas <- cbind(mesRef$mes.id,
                         mesRef$mes.nome,
+                        mesRef$database,
                         marcas)
         names(marcas) <- c(names(mesRef), "marca.nome", "marca.id")
         
@@ -149,25 +151,39 @@ busca_valor <- function(tipo, ano){
         return(valor)
 }
 
-download_fipe <- function(reset = FALSE, download_dir = "."){
+download_fipe <- function(mesRef, reset = FALSE, download_dir = "fipe_data"){
+
+        # se nao informar a mes de referencia, buscar database mais recente
+        if(missing(mesRef)){
+                # seleciona meses disponíveis
+                tabRef <- busca_mesReferencia()
+                # Seleciona o mes mais recente
+                mesRef <- tabRef %>% arrange(desc(database)) %>% slice(1)
+        }else{
+                # cast para data.frame, para chamadas da funcao por 'apply'
+                # nao consegui pensar em nada mais elegante
+                if(class(mesRef) != "data.frame"){
+                        df <- data.frame( mes.id = mesRef['mes.id'],
+                                          mes.nome = mesRef['mes.nome'],
+                                          database = as.Date(mesRef['database']))
+                        mesRef = df
+                }
+        }
         
-        controle_arquivo <- paste0(download_dir, "/", "controleFipeDownload.RDS")
-        
+        controle_arquivo <- paste0(download_dir, "/", 
+                                   format(mesRef$database, "%Y%m"), 
+                                   "-controleFipeDownload.RDS")
+
         # cria arquivo de controle se é primeira execução ou reset == TRUE
         if( file.exists(controle_arquivo) && !reset){
-                print("Retomando download FIPE...")
+                print(paste0("Retomando download FIPE. Database: ", mesRef$mes.nome))
                 controle <- readRDS(controle_arquivo)
         }else{
                 # se nao, retoma download da marca que ainda não foi baixada.
-                print("Iniciando download FIPE...")
-                # seleciona meses disponíveis
-                tabRef <- busca_mesReferencia()        
-                
-                # Seleciona o mes atual, como o primeiro elemento da lista.
-                mes_atual <- tabRef[1,]
+                print(paste0("Iniciando download FIPE. Database: ", mesRef$mes.nome))
                 
                 # seleciona marcas
-                marcas <- busca_marcas(tipo = tipo['carro'], mesRef = mes_atual, 
+                marcas <- busca_marcas(tipo = tipo['carro'], mesRef = mesRef, 
                                        somente_principais = TRUE)
                 
                 # constroi o data frame de controle dos downloads
@@ -197,7 +213,10 @@ download_fipe <- function(reset = FALSE, download_dir = "."){
                                         marca_valores <- rbind(marca_valores, valor)
                                 }
                         }
-                        marca_arquivo <- paste0(download_dir, "/fipe-", marca$marca.nome,".csv")
+                        marca_arquivo <- paste0(download_dir, "/fipe-", 
+                                                format(marca$database, "%Y%m"),
+                                                "-",
+                                                marca$marca.nome,".csv")
                         write.csv(marca_valores, file = marca_arquivo)
                         
                         # atualiza o arquivo de controle
@@ -210,7 +229,26 @@ download_fipe <- function(reset = FALSE, download_dir = "."){
 }
 
 load_fipe_DF <- function(download_dir){
-        
+        fipe_files <- list.files(path = download_dir, pattern = "fipe*")
+        fipe_files <- paste0(download_dir, "/", fipe_files)
+        fipe.df <- do.call(rbind, lapply(fipe_files, 
+                                         function(x) read.csv(x, stringsAsFactors = FALSE)))
+        return(fipe.df)
 }
 
-download_fipe(download_dir = "data", reset = TRUE)
+# init 
+# baixa o mes de referencia mais recente
+# download_fipe(download_dir = "fipe_data")
+
+# baixa varios meses de referencia de uma vez
+download_fipe_PorAno <- function(ano, ...){
+        
+        if(missing(ano)) stop("Informar o ano")
+        
+        mesesRef = busca_mesReferencia()
+        mesesAno = mesesRef %>% filter(year(database) == ano)
+        apply(mesesAno, 1, download_fipe, ...)
+}
+
+download_fipe_PorAno(ano = 2016)
+
