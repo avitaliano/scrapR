@@ -151,7 +151,7 @@ busca_valor <- function(tipo, ano){
         return(valor)
 }
 
-download_fipe <- function(mesRef, reset = FALSE, download_dir = "fipe_data"){
+downloadFipe <- function(mesRef, reset = FALSE, download_dir = "fipe_data"){
 
         # cria diretorio se ele nao existe
         if(!file.exists(download_dir)){
@@ -246,21 +246,35 @@ load_fipe_DF <- function(download_dir){
 # download_fipe(download_dir = "fipe_data")
 
 # baixa varios meses de referencia de uma vez
-download_fipe_PorAno <- function(ano, ...){
+downloadFipe_PorAno <- function(ano, ...){
         
         if(missing(ano)) stop("Informar o ano")
         
         mesesRef = busca_mesReferencia()
         mesesAno = mesesRef %>% filter(year(database) == ano)
-        apply(mesesAno, 1, download_fipe, ...)
+        apply(mesesAno, 1, downloadFipe, ...)
 }
 
-download_fipe_VariosAnos <- function(ano_inicial, ano_final, ...){
+downloadFipe_VariosAnos <- function(ano_inicial, ano_final, ...){
         
         # verifica os parametros
         if(is.numeric(ano_inicial) && is.numeric(ano_final) && ano_inicial <= ano_final){
-                sapply(ano_final:ano_inicial, download_fipe_PorAno, ...)
+                sapply(ano_final:ano_inicial, downloadFipe_PorAno, ...)
         }else{
                 stop("parametros invalidos")
         }
+}
+
+downloadFipe_MesAnual <- function(mes = 1, ...){
+        
+        # verifica os parametros
+        if(is.numeric(mes) && mes >= 1 && mes <= 12){
+                print(paste0("Iniciando downloadFipe para o mês ", mes, " de cada ano"))
+        }else{
+                stop("parametros invalidos")
+        }
+        
+        tabRef = busca_mesReferencia()
+        mesesRef <- tabRef %>% filter(month(database) == mes)
+        apply(mesesRef, 1, downloadFipe, ...)
 }
