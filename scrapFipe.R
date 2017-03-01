@@ -278,3 +278,5 @@ downloadFipe_MesAnual <- function(mes = 1, ...){
         mesesRef <- tabRef %>% filter(month(database) == mes)
         apply(mesesRef, 1, downloadFipe, ...)
 }
+
+downloadFipe()
