@@ -4,6 +4,7 @@ library(httr)
 library(rvest)
 library(stringr)
 library(lubridate)
+library(dplyr)
 
 # urls 
 url_base <- "http://www.wimoveis.com.br"
@@ -205,31 +206,94 @@ extract_anuncio <- function(url_anuncio){
         return(anuncio)
 }
 
-download_anuncios <- function(url_anuncios, url_base, file_prefix, download_dir = "wimoveis"){
+download_anuncios <- function(download_dir = "wimoveis", reset = FALSE){
 
+        # cria um arquivo de controle contendo todos os links das propriedades
+        controle_arquivo <- file.path(download_dir, "controleWimoveisDownload.RDS")
+        
+        if( file.exists(controle_arquivo) && !reset){
+                print("Retomando download Wimoveis: ")
+                controle <- readRDS(controle_arquivo)
+        }else{
+                # se nao, constroi arquivo de controle da lista de links
+                print("Iniciando download Wimoveis")
+                
+                # seleciona arquivos de lista de links baixados usando a funcao download_lista_anuncios
+                anuncios.links.csv <- file.path(download_dir,
+                                                list.files(path = download_dir, pattern = "wimoveis-links*"))
+                
+                # le todos os links de anuncios
+                anuncios.links <- do.call(rbind, lapply(anuncios.links.csv, 
+                                                     function(x) read.csv2(x, 
+                                                                           stringsAsFactors = FALSE,
+                                                                           col.names = "url" )))
+                controle <- anuncios.links
+                
+                # seta flag que nenhum anuncio já foi baixado
+                controle$downloaded <- FALSE
+                saveRDS(controle, file = controle_arquivo)
+        }
+        
+        # inicia o download dos anuncios
+        for(i in 1:nrow(controle)){
+                
+                anuncio <- controle[i,]
+                
+                # se anuncio ainda nao foi baixado, faz o download e parse
+                if( ! anuncio$downloaded){
+
+                        anuncio.df <- extract_anuncio(anuncio$url)
+                        
+                        # grava fazendo append no arquivo (ignora repetidos, trata depois)
+                        filename <- file.path(download_dir, "wimoveis-anuncios.csv")
+                        
+                        # writes header only once
+                        if( ! file.exists(filename)){
+                                write.table(anuncio.df, 
+                                            file = filename,
+                                            quote = T, 
+                                            sep = ";")
+                        }else {
+                                write.table(anuncio.df, 
+                                            file = filename,
+                                            append =  T, 
+                                            quote = T, 
+                                            sep = ";", 
+                                            col.names = F)
+                        }
+                        
+                        # atualiza arquivo de controle
+                        controle[i,]$downloaded <- TRUE
+                        saveRDS(controle, file = controle_arquivo)
+                }
+        }
+}
+
+download_lista_anuncios <- function(url_anuncios, url_base, download_dir = "wimoveis", file_prefix){
+        
         # cria diretorio se ele nao existe
         if(!file.exists(download_dir)){
                 dir.create(download_dir)
         }
-
+        
+        i <- 1L
         repeat{
                 pag_anuncios <- list_anuncios(url_anuncios, url_base)     
                 print (paste("Iniciando donwload do link ", url_anuncios))
-
-                # nome do arquivo
-                filename <- paste0(download_dir, format(Sys.time(), "/%Y%m%d%H%M%S-"),
-                                   "wimoveis-",
+                
+                # nome do arquivo da lista
+                filename <- paste0(download_dir,
+                                   "/wimoveis-links-",
                                    file_prefix,
+                                   as.character(i),
                                    ".csv")
-
-                # busca anuncios
-                anuncios.df <- do.call(rbind, lapply(pag_anuncios$urls, extract_anuncio))
+                i <- i + 1 
                 
                 # salva em arquivo
-                write.csv2(anuncios.df, file = filename)
+                write.csv2(pag_anuncios$urls, file = filename, row.names = FALSE)
                 print(paste("Salvo arquivo", filename))
                 
-                if (is.na(pag_anuncios$next_url)){
+                if (length(pag_anuncios$next_url) == 0){
                         break
                 } else{
                         url_anuncios <- pag_anuncios$next_url
@@ -237,6 +301,15 @@ download_anuncios <- function(url_anuncios, url_base, file_prefix, download_dir 
         }
 }
 
-lapply(urls_venda, function(x) download_anuncios(x, url_base, file_prefix = "venda"))
+load_anuncios_csv <- function(download_dir = "wimoveis"){
+        anuncios <- list.files(path = download_dir, pattern = "*wimoveis*")
+        files_anuncios <- paste0(download_dir, "/", anuncios)
+        anuncios.df <- do.call(rbind, lapply(files_anuncios, 
+                                         function(x) read.csv2(x, stringsAsFactors = FALSE)))
+        return(anuncios.df)
+}
 
+download_lista_anuncios("http://www.wimoveis.com.br/apartamentos-aluguel-noroeste-brasilia.html", url_base,
+                        file_prefix = "aluguel-noroeste")
 
+download_anuncios()
