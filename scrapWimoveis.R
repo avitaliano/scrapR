@@ -1,3 +1,4 @@
+
 # scrap dos imoveis da página wimoveis
 
 library(httr)
@@ -5,6 +6,8 @@ library(rvest)
 library(stringr)
 library(lubridate)
 library(dplyr)
+library(data.table)
+library(ggplot2)
 
 # urls 
 url_base <- "http://www.wimoveis.com.br"
@@ -301,15 +304,24 @@ download_lista_anuncios <- function(url_anuncios, url_base, download_dir = "wimo
         }
 }
 
-load_anuncios_csv <- function(download_dir = "wimoveis"){
-        anuncios <- list.files(path = download_dir, pattern = "*wimoveis*")
-        files_anuncios <- paste0(download_dir, "/", anuncios)
-        anuncios.df <- do.call(rbind, lapply(files_anuncios, 
-                                         function(x) read.csv2(x, stringsAsFactors = FALSE)))
+load_anuncios_csv <- function(download_dir = "wimoveis", filename = "wimoveis-anuncios.csv"){
+
+        file_anuncios <- file.path(download_dir, filename)
+        anuncios.df <- read.csv2(file_anuncios, stringsAsFactors = FALSE, row.names = NULL )
         return(anuncios.df)
 }
 
-download_lista_anuncios("http://www.wimoveis.com.br/apartamentos-aluguel-noroeste-brasilia.html", url_base,
-                        file_prefix = "aluguel-noroeste")
+#download_lista_anuncios("http://www.wimoveis.com.br/apartamentos-aluguel-noroeste-brasilia.html", url_base,
+#                        file_prefix = "aluguel-noroeste")
+#download_anuncios()
 
-download_anuncios()
+anuncios.df <- load_anuncios_csv()
+head(anuncios.df$local)
+anuncios.dt <- data.table(anuncios.df)
+
+anuncios.dt[str_detect(local, "Asa Norte"), bairro := "Asa Norte"]
+anuncios.dt[str_detect(local, "Asa Sul"), bairro := "Asa Sul"]
+anuncios.dt[str_detect(local, "Sudoeste"), bairro := "Sudoeste"]
+anuncios.dt[str_detect(local, "Noroeste"), bairro := "Noroeste"]
+anuncios.dt[, valor.venda.m2 := as.numeric(valor.venda) / as.integer(area_total)]
+
