@@ -13,14 +13,14 @@ library(ggplot2)
 url_base <- "http://www.wimoveis.com.br"
 
 urls_venda <- c( "http://www.wimoveis.com.br/apartamentos-venda-asa-sul-brasilia.html",
-        "http://www.wimoveis.com.br/apartamentos-venda-sudoeste-brasilia.html",
-        "http://www.wimoveis.com.br/apartamentos-venda-noroeste-brasilia.html",
-        "http://www.wimoveis.com.br/apartamentos-venda-asa-norte-brasilia.html")
+                 "http://www.wimoveis.com.br/apartamentos-venda-asa-norte-brasilia.html")
+        # "http://www.wimoveis.com.br/apartamentos-venda-sudoeste-brasilia.html",
+        # "http://www.wimoveis.com.br/apartamentos-venda-noroeste-brasilia.html")
 
 urls_aluguel <- c("http://www.wimoveis.com.br/apartamentos-aluguel-asa-norte-brasilia.html",
-                "http://www.wimoveis.com.br/apartamentos-aluguel-asa-sul-brasilia.html",
-                "http://www.wimoveis.com.br/apartamentos-aluguel-sudoeste-brasilia.html",
-                "http://www.wimoveis.com.br/apartamentos-aluguel-noroeste-brasilia.html")
+                "http://www.wimoveis.com.br/apartamentos-aluguel-asa-sul-brasilia.html") #,
+#                "http://www.wimoveis.com.br/apartamentos-aluguel-sudoeste-brasilia.html",
+#                "http://www.wimoveis.com.br/apartamentos-aluguel-noroeste-brasilia.html")
 
 # funcoes auxiliares
 clean_html <- function(x) {
@@ -81,50 +81,98 @@ extract_dados_principais <- function(l){
         vagas = NA
         idade.imovel = NA
 
-        for (i in 1:length(l)){
-                item <- str_trim(paste(l[[i]], collapse = " "))
+        # for (i in 1:length(l)){
+        # 
+        #         item <- str_trim(paste(l[[i]], collapse = " "))
+        #         
+        #         if ( str_detect(item, "Área total") ) {
+        #                 area_total <- str_extract(item, '[0-9]+')
+        #                 
+        #         } else if ( str_detect(item, "Área útil") ) {
+        #                 area_util <- str_extract(item, '[0-9]+')
+        #                 
+        #         } else if ( str_detect(item, "Quarto") ) {
+        #                 quartos <- str_extract(item, '[0-9]+')
+        #                 
+        #         } else if ( str_detect(item, "Suite") ) {
+        #                 suites <- str_extract(item, '[0-9]+')
+        #                 
+        #         } else if ( str_detect(item, "Banheiro") ) {
+        #                 banheiros <- str_extract(item, '[0-9]+')
+        #                 
+        #         } else if ( str_detect(item, "Vaga") ) {
+        #                 vagas <- str_extract(item, '[0-9]+')
+        #                 
+        #         } else if ( str_detect(item, "Idade do imóvel") ) {
+        #                 idade.imovel <- str_extract(item, '[0-9]+')
+        #                 
+        #         } else if ( str_detect(item, "Valor Aluguel") ) {
+        #                 valor.aluguel <- extract_valor(item)
+        #                 
+        #         } else if ( str_detect(item, "Valor Venda") ) {
+        #                 valor.venda <- extract_valor(item)
+        #                 
+        #         } else if ( str_detect(item, "Valor Temporada") ) {
+        #                 valor.temporada <- extract_valor(item)
+        #                 
+        #         } else if ( str_detect(item, "Valor Condominio") ) {
+        #                 valor.condominio <- extract_valor(item)
+        #                 
+        #         } else if ( str_detect(item, "IPTU") ) {
+        #                 valor.iptu <- extract_valor(item)
+        #                 
+        #         } else {
+        #                 tipo_imovel <- item
+        #         }
+        # }
+
+        decode_item <- function(x){
+
+                print(x)
+                item <- str_trim(paste(x, collapse = " "))
                 
                 if ( str_detect(item, "Área total") ) {
-                        area_total <- str_extract(item, '[0-9]+')
+                        area_total <<- str_extract(item, '[0-9]+')
                         
                 } else if ( str_detect(item, "Área útil") ) {
-                        area_util <- str_extract(item, '[0-9]+')
+                        area_util <<- str_extract(item, '[0-9]+')
                         
                 } else if ( str_detect(item, "Quarto") ) {
-                        quartos <- str_extract(item, '[0-9]+')
+                        quartos <<- str_extract(item, '[0-9]+')
                         
                 } else if ( str_detect(item, "Suite") ) {
-                        suites <- str_extract(item, '[0-9]+')
+                        suites <<- str_extract(item, '[0-9]+')
                         
                 } else if ( str_detect(item, "Banheiro") ) {
-                        banheiros <- str_extract(item, '[0-9]+')
+                        banheiros <<- str_extract(item, '[0-9]+')
                         
                 } else if ( str_detect(item, "Vaga") ) {
-                        vagas <- str_extract(item, '[0-9]+')
+                        vagas <<- str_extract(item, '[0-9]+')
                         
                 } else if ( str_detect(item, "Idade do imóvel") ) {
-                        idade.imovel <- str_extract(item, '[0-9]+')
+                        idade.imovel <<- str_extract(item, '[0-9]+')
                         
                 } else if ( str_detect(item, "Valor Aluguel") ) {
-                        valor.aluguel <- extract_valor(item)
+                        valor.aluguel <<- extract_valor(item)
                         
                 } else if ( str_detect(item, "Valor Venda") ) {
-                        valor.venda <- extract_valor(item)
+                        valor.venda <<- extract_valor(item)
                         
                 } else if ( str_detect(item, "Valor Temporada") ) {
-                        valor.temporada <- extract_valor(item)
+                        valor.temporada <<- extract_valor(item)
                         
                 } else if ( str_detect(item, "Valor Condominio") ) {
-                        valor.condominio <- extract_valor(item)
+                        valor.condominio <<- extract_valor(item)
                         
                 } else if ( str_detect(item, "IPTU") ) {
-                        valor.iptu <- extract_valor(item)
+                        valor.iptu <<- extract_valor(item)
                         
                 } else {
-                        tipo_imovel <- item
+                        tipo_imovel <<- item
                 }
         }
-
+        
+        lapply(l, decode_item)
         dados_principais <- data.frame (tipo_imovel = tipo_imovel,
                                         valor.aluguel = valor.aluguel,
                                         valor.venda = valor.venda,
@@ -138,7 +186,7 @@ extract_dados_principais <- function(l){
                                         suites = suites,
                                         vagas = vagas,
                                         idade.imovel = idade.imovel)        
-
+        print(dados_principais)
         return(dados_principais)
 }
 
@@ -148,21 +196,23 @@ extract_dados_publicacao <- function(l){
         cod.wimoveis = NA
         data.anuncio = NA
         
-        for (i in 1:length(l)){
-                item <- str_trim(paste(l[[i]], collapse = " "))
+        decode_publicacao <- function(x){
+                item <- str_trim(paste(x, collapse = " "))
                 
                 if ( str_detect(item, "Código do anunciante") ) {
-                        cod.anuncio <- str_split(item, ":")[[1]][2]
+                        cod.anuncio <<- str_split(item, ":")[[1]][2]
                 } else if (str_detect(item, "Código Wimoveis") ) {
-                        cod.wimoveis <- str_split(item, ":")[[1]][2]
+                        cod.wimoveis <<- str_split(item, ":")[[1]][2]
                         
                 } else if ( str_detect(item, "Publicado faz")) {
-                        dias.publicacao <- str_extract(item, '[0-9]+')
+                        dias.publicacao <<- str_extract(item, '[0-9]+')
                         data.anuncio <- Sys.Date() - days(dias.publicacao)
                 } else if ( str_detect(item, "Publicado hoje")) {
-                        data.anuncio <- Sys.Date()
-                }
+                        data.anuncio <<- Sys.Date()
+                }                
         }
+
+        lapply(l, decode_publicacao)
         return(data.frame(cod.anuncio = cod.anuncio, 
                           cod.wimoveis = cod.wimoveis,
                           data.anuncio = data.anuncio))
@@ -311,17 +361,21 @@ load_anuncios_csv <- function(download_dir = "wimoveis", filename = "wimoveis-an
         return(anuncios.df)
 }
 
-#download_lista_anuncios("http://www.wimoveis.com.br/apartamentos-aluguel-noroeste-brasilia.html", url_base,
-#                        file_prefix = "aluguel-noroeste")
-#download_anuncios()
+#download_lista_anuncios(urls_aluguel[2], url_base,
+#                        file_prefix = "aluguel-asanorte")
 
-anuncios.df <- load_anuncios_csv()
-head(anuncios.df$local)
-anuncios.dt <- data.table(anuncios.df)
+#download_lista_anuncios(urls_aluguel[2], url_base,
+#                        file_prefix = "aluguel-asasul")
 
-anuncios.dt[str_detect(local, "Asa Norte"), bairro := "Asa Norte"]
-anuncios.dt[str_detect(local, "Asa Sul"), bairro := "Asa Sul"]
-anuncios.dt[str_detect(local, "Sudoeste"), bairro := "Sudoeste"]
-anuncios.dt[str_detect(local, "Noroeste"), bairro := "Noroeste"]
-anuncios.dt[, valor.venda.m2 := as.numeric(valor.venda) / as.integer(area_total)]
+download_anuncios()
+
+# anuncios.df <- load_anuncios_csv()
+# head(anuncios.df$local)
+# anuncios.dt <- data.table(anuncios.df)
+# 
+# anuncios.dt[str_detect(local, "Asa Norte"), bairro := "Asa Norte"]
+# anuncios.dt[str_detect(local, "Asa Sul"), bairro := "Asa Sul"]
+# anuncios.dt[str_detect(local, "Sudoeste"), bairro := "Sudoeste"]
+# anuncios.dt[str_detect(local, "Noroeste"), bairro := "Noroeste"]
+# anuncios.dt[, valor.venda.m2 := as.numeric(valor.venda) / as.integer(area_total)]
 
