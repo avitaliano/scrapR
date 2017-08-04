@@ -13,14 +13,14 @@ library(ggplot2)
 url_base <- "http://www.wimoveis.com.br"
 
 urls_venda <- c( "http://www.wimoveis.com.br/apartamentos-venda-asa-sul-brasilia.html",
-                 "http://www.wimoveis.com.br/apartamentos-venda-asa-norte-brasilia.html")
-        # "http://www.wimoveis.com.br/apartamentos-venda-sudoeste-brasilia.html",
-        # "http://www.wimoveis.com.br/apartamentos-venda-noroeste-brasilia.html")
+                 "http://www.wimoveis.com.br/apartamentos-venda-asa-norte-brasilia.html",
+                 "http://www.wimoveis.com.br/apartamentos-venda-sudoeste-brasilia.html",
+                "http://www.wimoveis.com.br/apartamentos-venda-noroeste-brasilia.html")
 
 urls_aluguel <- c("http://www.wimoveis.com.br/apartamentos-aluguel-asa-norte-brasilia.html",
-                "http://www.wimoveis.com.br/apartamentos-aluguel-asa-sul-brasilia.html") #,
-#                "http://www.wimoveis.com.br/apartamentos-aluguel-sudoeste-brasilia.html",
-#                "http://www.wimoveis.com.br/apartamentos-aluguel-noroeste-brasilia.html")
+                "http://www.wimoveis.com.br/apartamentos-aluguel-asa-sul-brasilia.html",
+                "http://www.wimoveis.com.br/apartamentos-aluguel-sudoeste-brasilia.html",
+                "http://www.wimoveis.com.br/apartamentos-aluguel-noroeste-brasilia.html")
 
 # funcoes auxiliares
 clean_html <- function(x) {
@@ -259,7 +259,9 @@ extract_anuncio <- function(url_anuncio){
         return(anuncio)
 }
 
-download_anuncios <- function(download_dir = "wimoveis", reset = FALSE){
+download_anuncios <- function(download_dir = "wimoveis", 
+                              filename = "wimoveis-anuncios.csv",
+                              reset = FALSE){
 
         # cria um arquivo de controle contendo todos os links das propriedades
         controle_arquivo <- file.path(download_dir, "controleWimoveisDownload.RDS")
@@ -294,21 +296,20 @@ download_anuncios <- function(download_dir = "wimoveis", reset = FALSE){
                 
                 # se anuncio ainda nao foi baixado, faz o download e parse
                 if( ! anuncio$downloaded){
-
                         anuncio.df <- extract_anuncio(anuncio$url)
                         
                         # grava fazendo append no arquivo (ignora repetidos, trata depois)
-                        filename <- file.path(download_dir, "wimoveis-anuncios.csv")
+                        file <- file.path(download_dir, filename)
                         
                         # writes header only once
-                        if( ! file.exists(filename)){
+                        if( ! file.exists(file)){
                                 write.table(anuncio.df, 
-                                            file = filename,
+                                            file = file,
                                             quote = T, 
                                             sep = ";")
                         }else {
                                 write.table(anuncio.df, 
-                                            file = filename,
+                                            file = file,
                                             append =  T, 
                                             quote = T, 
                                             sep = ";", 
@@ -361,21 +362,5 @@ load_anuncios_csv <- function(download_dir = "wimoveis", filename = "wimoveis-an
         return(anuncios.df)
 }
 
-#download_lista_anuncios(urls_aluguel[2], url_base,
-#                        file_prefix = "aluguel-asanorte")
 
-#download_lista_anuncios(urls_aluguel[2], url_base,
-#                        file_prefix = "aluguel-asasul")
-
-download_anuncios()
-
-# anuncios.df <- load_anuncios_csv()
-# head(anuncios.df$local)
-# anuncios.dt <- data.table(anuncios.df)
-# 
-# anuncios.dt[str_detect(local, "Asa Norte"), bairro := "Asa Norte"]
-# anuncios.dt[str_detect(local, "Asa Sul"), bairro := "Asa Sul"]
-# anuncios.dt[str_detect(local, "Sudoeste"), bairro := "Sudoeste"]
-# anuncios.dt[str_detect(local, "Noroeste"), bairro := "Noroeste"]
-# anuncios.dt[, valor.venda.m2 := as.numeric(valor.venda) / as.integer(area_total)]
 
