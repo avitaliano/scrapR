@@ -11,24 +11,29 @@ library(ggplot2)
 
 ################
 # constantes
+download_dir <- "scrapWimoveis/data"
 url_base <- "http://www.wimoveis.com.br"
+url_anuncios <- c( "http://www.wimoveis.com.br/apartamentos-venda-asa-norte-brasilia.html")
+# url_anuncios <- c( "http://www.wimoveis.com.br/apartamentos-venda-asa-sul-brasilia.html",
+#                  "http://www.wimoveis.com.br/apartamentos-venda-asa-norte-brasilia.html",
+#                  "http://www.wimoveis.com.br/apartamentos-venda-sudoeste-brasilia.html",
+#                  "http://www.wimoveis.com.br/apartamentos-venda-noroeste-brasilia.html")
 
-urls_anuncios <- c( "http://www.wimoveis.com.br/apartamentos-venda-asa-sul-brasilia.html",
-                 "http://www.wimoveis.com.br/apartamentos-venda-asa-norte-brasilia.html",
-                 "http://www.wimoveis.com.br/apartamentos-venda-sudoeste-brasilia.html",
-                 "http://www.wimoveis.com.br/apartamentos-venda-noroeste-brasilia.html")
-
-# urls_anuncios <- c("http://www.wimoveis.com.br/apartamentos-aluguel-asa-norte-brasilia.html",
+# url_anuncios <- c("http://www.wimoveis.com.br/apartamentos-aluguel-asa-norte-brasilia.html",
 #                   "http://www.wimoveis.com.br/apartamentos-aluguel-asa-sul-brasilia.html",
 #                   "http://www.wimoveis.com.br/apartamentos-aluguel-sudoeste-brasilia.html",
 #                   "http://www.wimoveis.com.br/apartamentos-aluguel-noroeste-brasilia.html")
+
+set_download_dir <- function(dir){
+        download_dia <<- dir
+}
 
 set_url_base <- function(url){
         url_base <<- url
 }
 
-set_urls_anuncios <- function(urls){
-        urls_anuncios <<- urls
+set_url_anuncios <- function(url){
+        url_anuncios <<- url
 }
 
 
@@ -41,7 +46,7 @@ clean_html <- function(x) {
 }
 
 # extrai campos de valor, limpando o texto
-extract_valor <- function(x){
+parse_valor <- function(x){
         ini <- str_locate(x, "R\\$")[2] + 1
         
         if (is.na(ini)) return(NA)
@@ -61,6 +66,50 @@ parse_card <- function(li){
         atributo <- clean_html(li %>% html_nodes(".nombre") %>% html_text())
         valor <- clean_html(li %>% html_nodes(".valor") %>% html_text())
         return(c(atributo, valor))
+}
+
+
+################
+# funcao principal, que baixa as listas de anuncios, e depois baixa os anuncios jogando para o arquivo csv.
+scrap_wimoveis <- function(file_prefix){
+        
+        set_download_dir(download_dir)
+        download_lista_anuncios(file_prefix = file_prefix)
+        download_anuncios(file_prefix = file_prefix)
+}
+
+# funcao que baixa as paginas que contem os anuncios a partir da pagina inicial dos anuncios
+download_lista_anuncios <- function(file_prefix){
+        
+        # cria os diretorios 
+        if(!file.exists(download_dir)){
+                dir.create(download_dir)
+        }
+        
+        links_dir <- file.path(download_dir, "links")
+        if(!file.exists(links_dir)){
+                dir.create(links_dir)
+        }
+        
+        i <- 1L
+        repeat{
+                print (paste("Iniciando donwload do link ", url_anuncios))
+                pag_anuncios <- list_anuncios(url_anuncios)     
+                
+                # nome do arquivo da lista
+                filename <- file.path(links_dir, paste0("wimoveis-links-", file_prefix, as.character(i),".csv"))
+                i <- i + 1 
+                
+                # salva em arquivo
+                write.csv2(pag_anuncios$urls, file = filename, row.names = FALSE)
+                print(paste("Salvo arquivo", filename))
+                
+                if (length(pag_anuncios$next_url) == 0){
+                        break
+                } else{
+                        url_anuncios <- pag_anuncios$next_url
+                }
+        }
 }
 
 # constroi uma lista com a url de todos os anuncios de uma página de lista de anuncios do wimoveis
@@ -124,19 +173,19 @@ extract_dados_principais <- function(l){
                         idade.imovel <<- str_extract(item, '[0-9]+')
                         
                 } else if ( str_detect(item, "Valor Aluguel") ) {
-                        valor.aluguel <<- extract_valor(item)
+                        valor.aluguel <<- parse_valor(item)
                         
                 } else if ( str_detect(item, "Valor Venda") ) {
-                        valor.venda <<- extract_valor(item)
+                        valor.venda <<- parse_valor(item)
                         
                 } else if ( str_detect(item, "Valor Temporada") ) {
-                        valor.temporada <<- extract_valor(item)
+                        valor.temporada <<- parse_valor(item)
                         
                 } else if ( str_detect(item, "Valor Condominio") ) {
-                        valor.condominio <<- extract_valor(item)
+                        valor.condominio <<- parse_valor(item)
                         
                 } else if ( str_detect(item, "IPTU") ) {
-                        valor.iptu <<- extract_valor(item)
+                        valor.iptu <<- parse_valor(item)
                         
                 } else {
                         tipo_imovel <<- item
@@ -232,9 +281,7 @@ extract_anuncio <- function(url_anuncio){
         return(anuncio)
 }
 
-download_anuncios <- function(download_dir = "wimoveis", 
-                              filename = "wimoveis-anuncios.csv",
-                              reset = FALSE){
+download_anuncios <- function(prefix, reset = FALSE){
 
         # cria um arquivo de controle contendo todos os links das propriedades
         controle_arquivo <- file.path(download_dir, "controleWimoveisDownload.RDS")
@@ -272,7 +319,7 @@ download_anuncios <- function(download_dir = "wimoveis",
                         anuncio.df <- extract_anuncio(anuncio$url)
                         
                         # grava fazendo append no arquivo (ignora repetidos, trata depois)
-                        file <- file.path(download_dir, filename)
+                        file <- file.path(download_dir, paste0(prefix, ".csv"))
                         
                         # writes header only once
                         if( ! file.exists(file)){
@@ -296,48 +343,9 @@ download_anuncios <- function(download_dir = "wimoveis",
         }
 }
 
-download_lista_anuncios <- function(urls_anuncios, download_dir = "wimoveis", file_prefix){
+read_anuncios_csv <- function(prefix){
         
-        # cria os diretorios 
-        if(!file.exists(download_dir)){
-                dir.create(download_dir)
-        }
-       
-        links_dir <- file.path(download_dir, "links")
-        if(!file.exists(links_dir)){
-                dir.create(links_dir)
-        }
-        
-        i <- 1L
-        repeat{
-                pag_anuncios <- list_anuncios(urls_anuncios)     
-                print (paste("Iniciando donwload do link ", urls_anuncios))
-                
-                # nome do arquivo da lista
-                filename <- file.path(links_dir, paste0("wimoveis-links-", file_prefix, as.character(i),".csv"))
-                i <- i + 1 
-                
-                # salva em arquivo
-                write.csv2(pag_anuncios$urls, file = filename, row.names = FALSE)
-                print(paste("Salvo arquivo", filename))
-                
-                if (length(pag_anuncios$next_url) == 0){
-                        break
-                } else{
-                        urls_anuncios <- pag_anuncios$next_url
-                }
-        }
-}
-
-scrap_wimoveis <- function(file_prefix){
-        
-        download_lista_anuncios(file_prefix = file_prefix)
-        download_anuncios(file_prefix = file_prefix)
-}
-
-
-read_anuncios_csv <- function(download_dir = "wimoveis", filename = "wimoveis-anuncios.csv"){
-        
+        filename <- paste0(prefix, ".csv")
         file_anuncios <- file.path(download_dir, filename)
         anuncios.df <- read.csv2(file_anuncios, stringsAsFactors = FALSE, row.names = NULL )
         return(anuncios.df)

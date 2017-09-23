@@ -1,12 +1,18 @@
 source("scrapWimoveis.R")
+library(stringr)
+library(dplyr)
 
 
 # lapply(urls_venda, function(x) download_lista_anuncios(x, 
 #                                                        url_base, 
 #                                                        file_prefix = "venda"))
-# 
-# download_anuncios(filename = "wimoves-anuncios-venda.csv")
 
+#download_lista_anuncios(urls_aluguel[1], url_base, file_prefix = "aluguel-asanorte-atualizado") 
+download_anuncios(filename = "wimoves-anuncios-aluguel-asanorte.csv")
+
+
+
+anuncios.df <- load_anuncios_csv(filename = "wimoveis-anuncios-aluguel.csv")
 addColumns <- function(anuncios.df){
         
         anuncios.dt <- data.table(anuncios.df)
@@ -20,11 +26,20 @@ addColumns <- function(anuncios.df){
         return(anuncios.dt)
 }
 
-anuncios.df <- load_anuncios_csv(filename = 'wimoveis-anuncios-aluguel.csv')
+anuncios.df <- load_anuncios_csv(filename = 'anuncios-consolidados.csv')
+
+View(anuncios.df)
+
 anuncios.dt <- addColumns(anuncios.df)
 
-anuncios.dt
-
+anuncios.dt %>% 
+        filter( bairro == "Asa Norte" #str_detect(local, "SQN") 
+               & quartos == 3
+               & banheiros == 2
+               & valor.aluguel > 0) %>%
+        select(local, valor.aluguel, area_total, valor.aluguel.m2, quartos, banheiros, suites) %>%
+        arrange(as.numeric(area_total)) %>% View
+        
 
 
 
