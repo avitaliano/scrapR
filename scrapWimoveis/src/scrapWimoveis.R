@@ -71,15 +71,15 @@ parse_card <- function(li){
 
 ################
 # funcao principal, que baixa as listas de anuncios, e depois baixa os anuncios jogando para o arquivo csv.
-scrap_wimoveis <- function(file_prefix){
+scrap_wimoveis <- function(prefix, download_dir = "scrapWimoveis/data", reset = FALSE){
         
         set_download_dir(download_dir)
-        download_lista_anuncios(file_prefix = file_prefix)
-        download_anuncios(file_prefix = file_prefix)
+        download_lista_anuncios(prefix = prefix)
+        download_anuncios(prefix = prefix, reset = reset)
 }
 
 # funcao que baixa as paginas que contem os anuncios a partir da pagina inicial dos anuncios
-download_lista_anuncios <- function(file_prefix){
+download_lista_anuncios <- function(prefix){
         
         # cria os diretorios 
         if(!file.exists(download_dir)){
@@ -97,7 +97,7 @@ download_lista_anuncios <- function(file_prefix){
                 pag_anuncios <- list_anuncios(url_anuncios)     
                 
                 # nome do arquivo da lista
-                filename <- file.path(links_dir, paste0("wimoveis-links-", file_prefix, as.character(i),".csv"))
+                filename <- file.path(links_dir, paste0("wimoveis-links-", prefix, as.character(i),".csv"))
                 i <- i + 1 
                 
                 # salva em arquivo
@@ -294,8 +294,9 @@ download_anuncios <- function(prefix, reset = FALSE){
                 print("Iniciando download Wimoveis")
                 
                 # seleciona arquivos de lista de links baixados usando a funcao download_lista_anuncios
-                anuncios.links.csv <- file.path(download_dir, "links",
-                                                list.files(path = download_dir, pattern = "wimoveis-links*"))
+                links_dir <- file.path(download_dir, "links")
+                anuncios.links.csv <- file.path(links_dir,
+                                                list.files(path = links_dir, pattern = "wimoveis-links*"))
                 
                 # le todos os links de anuncios
                 anuncios.links <- do.call(rbind, lapply(anuncios.links.csv, 

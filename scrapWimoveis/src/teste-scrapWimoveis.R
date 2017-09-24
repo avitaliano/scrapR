@@ -2,4 +2,5 @@
 
 source("scrapWimoveis/src/scrapWimoveis.R")
 
-scrap_wimoveis(file_prefix = "teste-venda-asanorte")
+scrap_wimoveis(prefix = "teste-venda-asanorte")
+download_anuncios(prefix = "teste-venda-asanorte", reset = TRUE)
