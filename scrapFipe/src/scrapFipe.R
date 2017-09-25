@@ -14,6 +14,11 @@ api_Valor               <- paste0(api_baseurl, '/ConsultarValorComTodosParametro
 
 # Constantes de tipo de veículo
 tipo = c(carro ="1", moto = "2", caminhao = "3")
+# pasta para realizar os downloads
+download_dir <- "scrapFipe/data"
+set_download_dir <- function(dir){
+        download_dia <<- dir
+}
 
 # Função que chama a API da FIPE
 api_fipe <- function(url, data, verbose = FALSE, encode = "form"){
@@ -83,6 +88,7 @@ busca_marcas <- function(tipo, mesRef, somente_principais = FALSE){
                 marcas <- marcas %>% filter(marca.nome %in% marcas_principais)        
         }
         
+        marcas
         return(marcas)
 }
 
@@ -151,11 +157,11 @@ busca_valor <- function(tipo, ano){
         return(valor)
 }
 
-downloadFipe <- function(mesRef, reset = FALSE, download_dir = "fipe_data"){
+downloadFipe <- function(mesRef, reset = FALSE){
 
         # cria diretorio se ele nao existe
         if(!file.exists(download_dir)){
-                dir.create(download_dir)
+                dir.create(download_dir, recursive = TRUE)
         }
         
         # se nao informar a mes de referencia, buscar database mais recente
@@ -207,7 +213,7 @@ downloadFipe <- function(mesRef, reset = FALSE, download_dir = "fipe_data"){
                         modelos <- busca_modelos(tipo = tipo['carro'], marca = marca )
                         for(j in 1:nrow(modelos)){
                                 modelo <- modelos[j, ]
-                                #print(paste("   Modelo",modelo$modelo.nome))
+                                print(paste("   Modelo",modelo$modelo.nome))
                                 
                                 anos <- busca_anos(tipo = tipo['carro'], modelo = modelo)
                                 for(k in 1:nrow(anos)){
