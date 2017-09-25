@@ -1,3 +1,7 @@
 .Rproj.user
 *.RProj
 .DS_Store
+.RData
+.Rapp
+.Rapp.history
+.Rhistory
