@@ -1,8 +1,3 @@
-scrapRoubo.R
 .Rproj.user
-.R*
 *.RProj
-data
-fipe_data
-wimoveis
 .DS_Store
