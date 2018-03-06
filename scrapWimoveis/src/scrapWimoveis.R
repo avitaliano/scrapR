@@ -13,13 +13,13 @@ library(ggplot2)
 # constantes
 download_dir <- "scrapWimoveis/data"
 url_base <- "http://www.wimoveis.com.br"
-url_anuncios <- c( "http://www.wimoveis.com.br/apartamentos-venda-asa-norte-brasilia.html")
+# url_anuncios <- c( "http://www.wimoveis.com.br/apartamentos-venda-asa-norte-brasilia.html")
 # url_anuncios <- c( "http://www.wimoveis.com.br/apartamentos-venda-asa-sul-brasilia.html",
 #                  "http://www.wimoveis.com.br/apartamentos-venda-asa-norte-brasilia.html",
 #                  "http://www.wimoveis.com.br/apartamentos-venda-sudoeste-brasilia.html",
 #                  "http://www.wimoveis.com.br/apartamentos-venda-noroeste-brasilia.html")
 
-# url_anuncios <- c("http://www.wimoveis.com.br/apartamentos-aluguel-asa-norte-brasilia.html",
+url_anuncios <- c("http://www.wimoveis.com.br/apartamentos-aluguel-asa-norte-brasilia.html")
 #                   "http://www.wimoveis.com.br/apartamentos-aluguel-asa-sul-brasilia.html",
 #                   "http://www.wimoveis.com.br/apartamentos-aluguel-sudoeste-brasilia.html",
 #                   "http://www.wimoveis.com.br/apartamentos-aluguel-noroeste-brasilia.html")
@@ -90,6 +90,10 @@ download_lista_anuncios <- function(prefix){
         if(!file.exists(links_dir)){
                 dir.create(links_dir)
         }
+        
+        # remove arquivos de links de outras execucoes
+        old <- file.path(links_dir, dir(path = links_dir, pattern = "wimoveis-links*"))
+        file.remove(old)
         
         i <- 1L
         repeat{
@@ -295,8 +299,10 @@ download_anuncios <- function(prefix, reset = FALSE){
                 
                 # seleciona arquivos de lista de links baixados usando a funcao download_lista_anuncios
                 links_dir <- file.path(download_dir, "links")
+                
                 anuncios.links.csv <- file.path(links_dir,
-                                                list.files(path = links_dir, pattern = "wimoveis-links*"))
+                                                list.files(path = links_dir, 
+                                                           pattern = paste0("*", prefix, "*")))
                 
                 # le todos os links de anuncios
                 anuncios.links <- do.call(rbind, lapply(anuncios.links.csv, 
